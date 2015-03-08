@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<title>CingleVue Code Challenge</title>
+<head>
+	<script>
+		// XMLHTTPRequest that will be used to retrieve data from the server with AJAX
+		var xmlHTTPRequest = new XMLHTTPRequest();
+		
+		//base serverURL, action can be view/delete/update/new
+		var servletURL = "/CingleVueServlet?action=";
+		
+		//all actions will be processed by the same function processServerResponse
+		xmlHTTPRequest.onreadystatechange = processServerResponse;
+		
+		//when the page is loading for the first time, all schools will be retrieved
+		xmlHTTPRequest.open("Get", servletURL + "view", true);
+		xmlHTTPRequest.send(null);
+			
+		// Called when delete button for one of the schools was clicked
+		function deleteSchoolClicked(code) {
+			xmlHTTPRequest.open("Get", servletURL + "delete&code=" + code, true);
+			xmlHTTPRequest.send(null);
+		}
+		
+		//The same button is used to update the school data or save the updated data.
+		//When the button has "Update" text on it, this function will make all input fields
+		//for the current school updatable and change the button text to "Save". When the user 
+		//clicks on "Save" this function will send a request to the server to update this school
+		//and fetch all schools again.
+		function updateSaveSchoolClicked(code) {
+			if (document.getElementById('updateSaveBtn' + code).innerHTML == 'Save') {
+				var name = document.getElementById('name'+code).value;
+				var address = document.getElementById('address'+code).value;
+				var emailDomain = document.getElementById('emailDomain'+code).value;
+				xmlHTTPRequest.open("Get", servletURL + "update&code=" + code + "&name=" + 
+									name + "&address=" + address, + "&emailDomain=" + emailDomain, true);
+				xmlHTTPRequest.send(null);
+			} else {
+				// Remove readonly restrictions from all the fields for the current school except the code.
+				// The code is not allowed to be updated as it is used as an identifier.
+				document.getElementById('name'+code).readOnly = false;
+				document.getElementById('address'+code).readOnly = false;
+				document.getElementById('emailDomain'+code).readOnly = false;
+				document.getElementById('updateSaveBtn' + code).innerHTML = 'Save';
+			}
+		}
+		
+		//This is a callback function for the AJAX and it will be called when the server responds.
+		function processServerResponse() {
+		
+			//if the response was successfull
+			if (xmlHTTPRequest.readyState == 4 && xmlHTTPRequest == 200) {
+			
+				//schoolsCollection will contain a collection of schools
+				var schoolsCollection = JSON.parse(xmlHTTPRequest.responseText);
+				var out = "";
+				
+				//loop on all schools in the list
+				for(i = 0; i < schoolsCollection.length; i++) {
+					// new row in the table
+					out += "<tr>" +
+					// add text input for code
+					"<td><input type=text id='code" + schoolsCollection[i].code + "' readonly='true' value='" + schoolsCollection[i].code + "'></td>" + 
+					// add text input for name
+					"<td><input type=text id='name" + schoolsCollection[i].code + "'readonly='true' value='" + schoolsCollection[i].name + "'></td>" +
+					// add text input for address
+					"<td><input type=text id='address" + schoolsCollection[i].code + "'readonly='true' value='" + schoolsCollection[i].address + "'></td>" +
+					// add text input for emailDomain
+					"<td><input type=text id='emailDomain" + schoolsCollection[i].code + "'readonly='true' value='" + schoolsCollection[i].emailDomain + "'></td>" +
+					
+					// add button that will allow to update this school
+					"<td><button type=button id='updateSaveBtn" + schoolsCollection[i].code + "' onclick=\"updateSchoolClicked('" + schoolsCollection[i].code + "');\">Update</button></td>" +
+					
+					// add button that will allow to delete this school
+					"<td><button type=button onclick=\"deleteSchoolClicked('" + schoolsCollection[i].code + "');\">Delete</button></td>" +
+					
+					//close this row
+					"</tr>";
+				}
+				
+				//show this newly formed table
+				document.getElementById("schoolsTable").innerHTML = out;
+			}
+		}
+		
+		//sends a request to the server to insert a new school
+		function saveNewSchool() {
+			var code = document.getElementById('codeNew').value;
+			var name = document.getElementById('nameNew').value;
+			var address = document.getElementById('addressNew').value;
+			var emailDomain = document.getElementById('emailDomainNew').value;
+			xmlHTTPRequest.open("Get", servletURL + "new&code=" + code + "&name=" + 
+								name + "&address=" + address, + "&emailDomain=" + emailDomain, true);
+			xmlHTTPRequest.send(null);
+		}
+		
+	</script>
+</head>
+<body>
+	<h1> CingleVue Coding Challenge</h1>
+	<table border=0>
+	<thead>
+	<tr>
+	<td>Code</td>
+	<td>Name</td>
+	<td>Address</td>
+	<td>Email Domain</td>
+	<td></td>
+	<td></td>
+	</tr>
+	</thead>
+	<tbody id="schoolsTable">
+	<!-- test only
+	<tr id="row003">
+		<td><input type=text id="code" size="20" value="003"> </td>
+		<td><input type=text id="name" size="20" value="Straw Nest Primary School"> </td>
+		<td><input type=text id="address" size="20" value="10 Showground Road"> </td>
+		<td><input type=text id="emailDomain" size="20" value="@straw-nest.com.au"> </td>
+		<td><button type=button onclick="updateSaveSchoolClicked('003');">Update</button></td>
+		<td><button type=button onclick="deleteSchoolClicked('003');">Delete</button></td>
+	</tr>
+	-->
+	</tbody>
+	</table>
+	
+	<br>
+		<button type=button onclick="document.getElementById('newSchoolTable').style.display = 'inline'"> Add New School</button>
+	<br>
+	<table border=1  id="newSchoolTable" style="display:none">
+	<thead>
+	<tr>
+		<td>Code</td>
+		<td>Name</td>
+		<td>Address</td>
+		<td>Email Domain</td>
+		<td></td>
+	</tr>
+	</thead>
+	<tbody>	
+	<tr >
+		<td><input type=text id="codeNew" value=""> </td>
+		<td><input type=text id="nameNew" value=""> </td>
+		<td><input type=text id="addressNew" value=""> </td>
+		<td><input type=text id="emailDomainNew" value=""> </td>
+		<td><button type=button onclick="saveNewSchool();">Save</button></td>
+
+	</tr>
+	</tbody>
+	</table>
+</body>
+</html>
